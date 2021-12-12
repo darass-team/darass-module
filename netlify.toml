@@ -4,6 +4,12 @@
   base = "/"
 
 [[redirects]]
+  from = "/embed.js"
+  to = "https://deploy-script.darass.co.kr/embed.js"
+  status = 301
+
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
