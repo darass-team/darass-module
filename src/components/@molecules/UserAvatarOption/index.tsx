@@ -1,10 +1,10 @@
 import Alarm from "@/components/@atoms/Alarm";
 import Avatar from "@/components/@atoms/Avatar";
 import Modal from "@/components/@molecules/Modal";
-import { useEditUser, useGetAlarmContents, useMessageChannelFromReplyModuleContext, useUser } from "@/hooks";
+import { SVG } from "@/constants/clientAssets";
+import { useEditUser, useGetAlarmContents, useMessageChannelFromReplyModuleContext } from "@/hooks";
 import { useUserContext } from "@/hooks/contexts/useUserContext";
 import { User } from "@/types/user";
-import { AlertError } from "@/utils/alertError";
 import { MouseEventHandler, ReactNode, useEffect, useState } from "react";
 import { Container, UserNickName, UserOption } from "./styles";
 
@@ -15,11 +15,11 @@ export interface Props {
 
 const UserAvatarOption = ({ user, children, ...props }: Props) => {
   const [isShowOptionBox, setShowOptionBox] = useState(false);
-  const { openAlarmModal, openAlert } = useMessageChannelFromReplyModuleContext();
+  const { openAlarmModal } = useMessageChannelFromReplyModuleContext();
   const { data: alarmContents, hasNewAlarmOnRealTime, setHasNewAlarmOnRealTime } = useGetAlarmContents();
   const { refetchUser } = useUserContext();
   const { editUser } = useEditUser();
-  const avatarImageURL = user ? user.profileImageUrl : undefined;
+  const avatarImageURL = user ? user.profileImageUrl : SVG.DEFAULT_USER_IMAGE;
 
   const onCloseShowOptionBox = () => {
     setShowOptionBox(false);
