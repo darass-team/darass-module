@@ -67,8 +67,8 @@ const App = () => {
       return accessToken;
     } catch (error) {
       axiosBearerOption.clear();
+      logout();
       if (!axios.isAxiosError(error)) {
-        logout();
         throw new AlertError("알 수 없는 에러입니다.");
       }
 

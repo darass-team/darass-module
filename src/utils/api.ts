@@ -1,6 +1,7 @@
 import { QUERY } from "@/constants/api";
 import { NO_ACCESS_TOKEN } from "@/constants/errorName";
 import {
+  Comment,
   CreateCommentRequestData,
   DeleteCommentRequestParameter,
   EditCommentParameter,
@@ -9,13 +10,11 @@ import {
   GuestUserConfirmInfo
 } from "@/types/comment";
 import { Project } from "@/types/project";
-import { Comment } from "@/types/comment";
+import { User } from "@/types/user";
 import axios from "axios";
 import { AlertError } from "./alertError";
 import convertDateFormat from "./convertDateFormat";
-import { axiosBearerOption } from "./customAxios";
 import { request } from "./request";
-import { User } from "@/types/user";
 
 export const deleteRefreshToken = async () => {
   try {
