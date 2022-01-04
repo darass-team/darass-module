@@ -17,24 +17,6 @@ import { axiosBearerOption } from "./customAxios";
 import { request } from "./request";
 import { User } from "@/types/user";
 
-export const getAccessTokenByRefreshToken = async () => {
-  try {
-    const response = await request.post(QUERY.LOGIN_REFRESH, {});
-    const { accessToken } = response.data;
-    axiosBearerOption.clear();
-    axiosBearerOption.setAccessToken(accessToken);
-
-    return accessToken;
-  } catch (error) {
-    axiosBearerOption.clear();
-    if (!axios.isAxiosError(error)) {
-      throw new AlertError("알 수 없는 에러입니다.");
-    }
-
-    throw new Error("액세스 토큰 재발급에 실패하셨습니다.");
-  }
-};
-
 export const deleteRefreshToken = async () => {
   try {
     const response = await request.delete(QUERY.LOGOUT);

@@ -14,3 +14,4 @@ export { useGetAlarmContents } from "./api/comment/useGetAlarmContents";
 export { useGetProjectOwnerId } from "./api/user/useGetProjectOwnerId";
 export { useEditUser } from "./api/user/useEditUser";
 export { useRecentlyAlarmWebSocket } from "./ui/useRecentlyAlarmWebSocket";
+export { useDeleteAccessToken } from "./api/token/useDeleteAccessToken";

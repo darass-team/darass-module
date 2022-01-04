@@ -1,6 +1,8 @@
 import LoadingPage from "@/components/@molecules/LoadingPage";
 import { QUERY } from "@/constants/api";
 import { useUserContext } from "@/hooks/contexts/useUserContext";
+import { axiosBearerOption } from "@/utils/customAxios";
+import { setLocalStorage } from "@/utils/localStorage";
 import { request } from "@/utils/request";
 import { useEffect } from "react";
 import { useLocation, useParams } from "react-router";
@@ -10,7 +12,7 @@ const OAuth = () => {
   const { provider } = useParams<{ provider: string }>();
   const urlSearchParams = new URLSearchParams(location.search);
   const code = urlSearchParams.get("code");
-  const { refetchAccessToken, accessToken } = useUserContext();
+  const { refetchUser, user } = useUserContext();
 
   useEffect(() => {
     if (!code) {
@@ -19,12 +21,20 @@ const OAuth = () => {
 
     const setAccessTokenAsync = async () => {
       try {
-        await request.post(QUERY.LOGIN, {
+        const response = await request.post(QUERY.LOGIN, {
           oauthProviderName: provider,
           authorizationCode: code
         });
 
-        refetchAccessToken();
+        const { accessToken, refreshToken } = response.data;
+
+        axiosBearerOption.clear();
+        axiosBearerOption.setAccessToken(accessToken);
+
+        setLocalStorage("refreshToken", refreshToken);
+        setLocalStorage("active", true);
+
+        refetchUser();
       } catch (error) {
         console.error(error);
       }
@@ -34,10 +44,10 @@ const OAuth = () => {
   }, [code]);
 
   useEffect(() => {
-    if (accessToken) {
-      window.close();
-    }
-  }, [accessToken]);
+    if (!user) return;
+
+    window.close();
+  }, [user]);
 
   useEffect(() => {
     const timeId = setTimeout(() => {

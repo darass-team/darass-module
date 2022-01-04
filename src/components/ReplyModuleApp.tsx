@@ -1,13 +1,19 @@
-import LoadingPage from "@/components/@molecules/LoadingPage";
 import CommentArea from "@/components/pages/CommentArea";
 import OAuth from "@/components/pages/OAuth";
+import { QUERY } from "@/constants/api";
 import { ROUTE } from "@/constants/route";
 import { PALETTE } from "@/constants/styles/palette";
-import { useRecentlyAlarmWebSocket, useUser } from "@/hooks";
+import { useDeleteAccessToken, useRecentlyAlarmWebSocket, useUser } from "@/hooks";
 import { MessageChannelFromReplyModuleContext } from "@/hooks/contexts/useMessageFromReplyModule";
 import { RecentlyAlarmContentContext } from "@/hooks/contexts/useRecentlyAlarmContentContext";
 import { UserContext } from "@/hooks/contexts/useUserContext";
+import { AlertError } from "@/utils/alertError";
+import { axiosBearerOption } from "@/utils/customAxios";
+import { getLocalStorage, removeLocalStorage } from "@/utils/localStorage";
 import { messageFromReplyModule } from "@/utils/postMessage";
+import { request } from "@/utils/request";
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
 import { useReplyModuleApp } from "./useReplyModuleApp";
@@ -35,11 +41,64 @@ const getReplyModuleParams = () => {
 const App = () => {
   const { isDarkModePage, primaryColor, isShowSortOption, isAllowSocialLogin, isShowLogo } = getReplyModuleParams();
 
-  const { user, logout, refetchUser, isLoading, isSuccess, accessToken, refetchAccessToken } = useUser();
+  const { user, refetchUser, isLoading, isSuccess, setUser, isFetched } = useUser();
+  const [accessToken, setAccessToken] = useState<string | undefined>();
+  const isActiveAccessToken = !!getLocalStorage("active");
 
   const { recentlyAlarmContent, hasNewAlarmOnRealTime, setHasNewAlarmOnRealTime } = useRecentlyAlarmWebSocket(user);
 
   const { port, receivedMessageFromReplyModal } = useReplyModuleApp();
+
+  const { deleteMutation } = useDeleteAccessToken({
+    onSuccess: () => {
+      setAccessToken(undefined);
+      axiosBearerOption.clear();
+    }
+  });
+
+  const getAccessTokenByRefreshToken = async (refreshToken: string) => {
+    try {
+      const response = await request.post(QUERY.LOGIN_REFRESH, { refreshToken });
+
+      const { accessToken } = response.data;
+      axiosBearerOption.clear();
+      axiosBearerOption.setAccessToken(accessToken);
+
+      return accessToken;
+    } catch (error) {
+      axiosBearerOption.clear();
+      if (!axios.isAxiosError(error)) {
+        logout();
+        throw new AlertError("알 수 없는 에러입니다.");
+      }
+
+      throw new Error("액세스 토큰 재발급에 실패하셨습니다.");
+    }
+  };
+
+  const refetchAccessToken = async () => {
+    const refreshToken = getLocalStorage("refreshToken");
+    const accessToken = await getAccessTokenByRefreshToken(refreshToken);
+
+    setAccessToken(accessToken);
+
+    await refetchUser();
+  };
+
+  const removeAccessToken = () => {
+    deleteMutation();
+    removeLocalStorage("active");
+    removeLocalStorage("refreshToken");
+  };
+
+  const logout = () => {
+    removeAccessToken();
+    setUser(undefined);
+  };
+
+  useEffect(() => {
+    if (isActiveAccessToken) refetchAccessToken();
+  }, [isActiveAccessToken]);
 
   return (
     <ThemeProvider

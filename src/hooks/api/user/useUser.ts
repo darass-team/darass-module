@@ -1,121 +1,53 @@
-import { TOKEN_REFETCH_TIMER } from "@/constants/timer";
+import { QUERY } from "@/constants/api";
+import { NO_ACCESS_TOKEN } from "@/constants/errorName";
 import { User } from "@/types/user";
-import { deleteRefreshToken, getAccessTokenByRefreshToken, getUser } from "@/utils/api";
-import { axiosBearerOption } from "@/utils/customAxios";
-import { getLocalStorage, removeLocalStorage, setLocalStorage } from "@/utils/localStorage";
-import { useEffect } from "react";
-import { useMutation } from "simple-react-query";
+import { AlertError } from "@/utils/alertError";
+import { request } from "@/utils/request";
+import axios from "axios";
 import { useQuery } from "simple-react-query";
 
-const useGetAccessTokenApi = () => {
-  const {
-    data: accessToken,
-    refetch: refetchAccessToken,
-    error: accessTokenError,
-    setData: setAccessToken,
-    clearRefetchInterval
-  } = useQuery<string>({
-    query: getAccessTokenByRefreshToken,
-    enabled: false,
-    refetchInterval: TOKEN_REFETCH_TIMER
-  });
+const getUser = async () => {
+  try {
+    const response = await request.get(QUERY.USER);
 
-  return {
-    accessToken,
-    refetchAccessToken,
-    accessTokenError,
-    setAccessToken,
-    clearRefetchInterval
-  };
-};
+    return response.data;
+  } catch (error) {
+    if (!axios.isAxiosError(error)) {
+      throw new AlertError("알 수 없는 에러입니다.");
+    }
 
-const compareUser = (prevUser?: User, currUser?: User) => {
-  return prevUser?.id === currUser?.id && prevUser?.hasRecentAlarm === currUser?.hasRecentAlarm;
+    if (error.response?.data.code === 806 || error.response?.data.code === 801) {
+      const newError = new Error("액세스 토큰이 존재하지 않습니다.");
+      newError.name = NO_ACCESS_TOKEN;
+
+      throw newError;
+    }
+
+    throw new AlertError("유저정보 조회에 실패하였습니다.\n잠시 후 다시 시도해주세요.");
+  }
 };
 
 export const useUser = () => {
-  const {
-    accessToken,
-    refetchAccessToken: _refetchAccessToken,
-    accessTokenError,
-    setAccessToken,
-    clearRefetchInterval
-  } = useGetAccessTokenApi();
-
   const {
     data: user,
     isLoading,
     error,
     refetch: refetchUser,
     isSuccess,
-    setData: setUser
-  } = useQuery<User>({
+    setData: setUser,
+    isFetched
+  } = useQuery<User | undefined>({
     query: getUser,
-    enabled: false,
-    isEqualToPrevDataFunc: compareUser
+    enabled: false
   });
 
-  const { mutation: deleteMutation } = useMutation<void, void>({
-    query: deleteRefreshToken,
-    onSuccess: () => {
-      setAccessToken(undefined);
-      axiosBearerOption.clear();
-    }
-  });
-
-  const refetchAccessToken = async () => {
-    await _refetchAccessToken();
-    await refetchUser();
+  return {
+    user,
+    isLoading,
+    error,
+    refetchUser,
+    isSuccess,
+    setUser,
+    isFetched
   };
-
-  const removeAccessToken = () => {
-    deleteMutation();
-    removeLocalStorage("active");
-    clearRefetchInterval();
-  };
-
-  const logout = () => {
-    removeAccessToken();
-    setUser(undefined);
-  };
-
-  const isActiveAccessToken = getLocalStorage("active");
-
-  const actionWhenAccessTokenChange = () => {
-    if (!accessToken) setUser(undefined);
-    else {
-      setLocalStorage("active", true);
-      refetchUser();
-    }
-  };
-
-  const actionInitAccessToken = () => {
-    if (isActiveAccessToken) {
-      refetchAccessToken();
-    } else {
-      clearRefetchInterval();
-    }
-  };
-
-  useEffect(() => {
-    actionInitAccessToken();
-  }, []);
-
-  useEffect(() => {
-    if (accessTokenError) {
-      logout();
-    }
-  }, [accessTokenError]);
-
-  useEffect(() => {
-    actionWhenAccessTokenChange();
-  }, [accessToken]);
-
-  useEffect(() => {
-    if (error) {
-      logout();
-    }
-  }, [error]);
-
-  return { user, accessToken, refetchAccessToken, isLoading, error, refetchUser, logout, isSuccess, setUser };
 };
