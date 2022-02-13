@@ -88,12 +88,19 @@ const App = () => {
     deleteMutation();
     removeLocalStorage("active");
     removeLocalStorage("refreshToken");
+    removeLocalStorage("accessToken");
   };
 
   const logout = () => {
     removeAccessToken();
     setUser(undefined);
   };
+
+  useEffect(() => {
+    if (!getLocalStorage("accessToken")) {
+      logout();
+    }
+  }, []);
 
   useEffect(() => {
     if (isActiveAccessToken) refetchUser();
