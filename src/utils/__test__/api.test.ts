@@ -1,6 +1,6 @@
-import { EditCommentParameter } from "@/types/comment";
-import { CreateCommentRequestData, GetCommentsRequestParams } from "@/types/comment";
 import { QUERY } from "@/constants/api";
+import { CreateCommentRequestData, EditCommentParameter, GetCommentsRequestParams } from "@/types/comment";
+import { alarmContents } from "@/__test__/fixture/alarmContent";
 import { comments } from "@/__test__/fixture/comments";
 import { socialLoginUser } from "@/__test__/fixture/user";
 import {
@@ -11,15 +11,13 @@ import {
   getAlarms,
   getAllComments,
   getConfirmGuestPassword,
-  likeComment,
   getProjectOwnerId,
   getUser,
+  likeComment,
   patchEditUser,
   postCreateComment
 } from "../api";
-import { customAxios, axiosBearerOption } from "../customAxios";
 import { request } from "../request";
-import { alarmContents } from "@/__test__/fixture/alarmContent";
 
 jest.mock("../request");
 jest.mock("../customAxios");

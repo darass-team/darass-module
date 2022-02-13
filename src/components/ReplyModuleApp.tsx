@@ -8,8 +8,7 @@ import { MessageChannelFromReplyModuleContext } from "@/hooks/contexts/useMessag
 import { RecentlyAlarmContentContext } from "@/hooks/contexts/useRecentlyAlarmContentContext";
 import { UserContext } from "@/hooks/contexts/useUserContext";
 import { AlertError } from "@/utils/alertError";
-import { axiosBearerOption } from "@/utils/customAxios";
-import { getLocalStorage, removeLocalStorage } from "@/utils/localStorage";
+import { getLocalStorage, removeLocalStorage, setLocalStorage } from "@/utils/localStorage";
 import { messageFromReplyModule } from "@/utils/postMessage";
 import { request } from "@/utils/request";
 import axios from "axios";
@@ -52,7 +51,7 @@ const App = () => {
   const { deleteMutation } = useDeleteAccessToken({
     onSuccess: () => {
       setAccessToken(undefined);
-      axiosBearerOption.clear();
+      removeLocalStorage("accessToken");
     }
   });
 
@@ -61,12 +60,12 @@ const App = () => {
       const response = await request.post(QUERY.LOGIN_REFRESH, { refreshToken });
 
       const { accessToken } = response.data;
-      axiosBearerOption.clear();
-      axiosBearerOption.setAccessToken(accessToken);
+
+      setLocalStorage("accessToken", accessToken);
 
       return accessToken;
     } catch (error) {
-      axiosBearerOption.clear();
+      removeLocalStorage("accessToken");
       logout();
       if (!axios.isAxiosError(error)) {
         throw new AlertError("알 수 없는 에러입니다.");
@@ -97,7 +96,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (isActiveAccessToken) refetchAccessToken();
+    if (isActiveAccessToken) refetchUser();
   }, [isActiveAccessToken]);
 
   return (
