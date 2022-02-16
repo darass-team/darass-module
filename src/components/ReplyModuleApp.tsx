@@ -50,7 +50,10 @@ const App = () => {
 
   const { deleteMutation } = useDeleteAccessToken({
     onSuccess: () => {
+      setUser(undefined);
       setAccessToken(undefined);
+      removeLocalStorage("active");
+      removeLocalStorage("refreshToken");
       removeLocalStorage("accessToken");
     }
   });
@@ -65,13 +68,24 @@ const App = () => {
 
       return accessToken;
     } catch (error) {
-      removeLocalStorage("accessToken");
-      logout();
       if (!axios.isAxiosError(error)) {
         throw new AlertError("알 수 없는 에러입니다.");
       }
 
-      throw new Error("액세스 토큰 재발급에 실패하셨습니다.");
+      if (error.response?.data.code === 801) {
+        // 액세스 토큰이 만료되었습니다.
+        refetchAccessToken();
+      }
+
+      if (error.response?.data.code === 401) {
+        // 리프레시 토큰이 존재하지 않습니다.
+        logout();
+      }
+
+      if (error.response?.data.code === 808) {
+        //"리프레시 토큰이 유효하지 않습니다."
+        logout();
+      }
     }
   };
 
@@ -86,14 +100,10 @@ const App = () => {
 
   const removeAccessToken = () => {
     deleteMutation();
-    removeLocalStorage("active");
-    removeLocalStorage("refreshToken");
-    removeLocalStorage("accessToken");
   };
 
   const logout = () => {
     removeAccessToken();
-    setUser(undefined);
   };
 
   useEffect(() => {
@@ -108,7 +118,11 @@ const App = () => {
 
   useEffect(() => {
     if (error) {
-      logout();
+      if (error.name === "expiredAccessToken") {
+        refetchAccessToken();
+      } else {
+        logout();
+      }
     }
   }, [error]);
 
