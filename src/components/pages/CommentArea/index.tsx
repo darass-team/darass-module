@@ -1,9 +1,8 @@
-import { PNG } from "@/constants/clientAssets";
 import Avatar from "@/components/@atoms/Avatar";
 import CommentInput from "@/components/@molecules/CommentInput";
 import Footer from "@/components/@molecules/Footer";
-import LoadingPage from "@/components/@molecules/LoadingPage";
 import UserAvatarOption from "@/components/@molecules/UserAvatarOption";
+import { PNG } from "@/constants/clientAssets";
 import { MANAGE_PAGE_DOMAIN } from "@/constants/domain";
 import { OAUTH_URL } from "@/constants/oauth";
 import { ORDER_BUTTON } from "@/constants/orderButton";
@@ -79,6 +78,8 @@ const CommentArea = ({ isVisible }: Props) => {
     if (commentsError) {
       setNotice(commentsError.message);
       return;
+    } else {
+      setNotice("");
     }
 
     if (!(getProjectOwnerError || commentsError)) {
