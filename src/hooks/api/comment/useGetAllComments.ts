@@ -1,7 +1,8 @@
 import { useUserContext } from "@/hooks/contexts/useUserContext";
-import { GetCommentsRequestParams, GetCommentsResponse, Comment } from "@/types/comment";
+import { Comment, GetCommentsRequestParams, GetCommentsResponse } from "@/types/comment";
 import { getAllComments } from "@/utils/api";
 import { deepObjectEqual } from "@/utils/deepEqual";
+import { removeLocalStorage } from "@/utils/localStorage";
 import { useEffect } from "react";
 import { useQuery } from "simple-react-query";
 
@@ -12,17 +13,24 @@ const compareComments = (prevComments: GetCommentsResponse, currComments: GetCom
 };
 
 export const useGetAllComments = ({ url, projectSecretKey, sortOption = "oldest" }: GetCommentsRequestParams) => {
-  const { user } = useUserContext();
+  const { user, accessToken, isLoadingUserRequest } = useUserContext();
 
   const { data, isLoading, refetch, error, setData, isFetched } = useQuery<GetCommentsResponse>({
-    enabled: true,
+    enabled: false,
     query: () => getAllComments({ url, projectSecretKey, sortOption }),
     isEqualToPrevDataFunc: compareComments
   });
 
   useEffect(() => {
     refetch();
-  }, [user]);
+  }, [isLoadingUserRequest, user, accessToken]);
+
+  useEffect(() => {
+    if (error) {
+      removeLocalStorage("accessToken");
+      refetch();
+    }
+  }, [error]);
 
   const totalCommentsCount = data?.totalComment || 0;
   const totalPage = data?.totalPage || 0;

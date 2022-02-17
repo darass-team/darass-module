@@ -41,20 +41,20 @@ const App = () => {
   const { isDarkModePage, primaryColor, isShowSortOption, isAllowSocialLogin, isShowLogo } = getReplyModuleParams();
 
   const { user, refetchUser, isLoading, isSuccess, setUser, error } = useUser();
+
   const [accessToken, setAccessToken] = useState<string | undefined>();
-  const isActiveAccessToken = !!getLocalStorage("active");
 
   const { recentlyAlarmContent, hasNewAlarmOnRealTime, setHasNewAlarmOnRealTime } = useRecentlyAlarmWebSocket(user);
 
   const { port, receivedMessageFromReplyModal } = useReplyModuleApp();
 
-  const { deleteMutation, isDeleteError } = useDeleteAccessToken({
+  const { deleteMutation, deleteError } = useDeleteAccessToken({
     onSuccess: () => {
       setUser(undefined);
       setAccessToken(undefined);
       removeLocalStorage("active");
-      removeLocalStorage("refreshToken");
       removeLocalStorage("accessToken");
+      removeLocalStorage("refreshToken");
     }
   });
 
@@ -73,11 +73,15 @@ const App = () => {
       }
 
       if (error.response?.data.code === 801) {
-        refetchAccessToken();
+        if (getLocalStorage("refreshToken")) {
+          refetchAccessToken();
+        }
       }
 
       if (error.response?.data.code === 808) {
-        refetchAccessToken();
+        if (getLocalStorage("refreshToken")) {
+          refetchAccessToken();
+        }
       }
 
       if (error.response?.data.code === 806) {
@@ -85,6 +89,18 @@ const App = () => {
       }
 
       if (error.response?.data.code === 810) {
+        setUser(undefined);
+        setAccessToken(undefined);
+        removeLocalStorage("active");
+        removeLocalStorage("refreshToken");
+        removeLocalStorage("accessToken");
+      }
+
+      if (error.response?.data.code === 809) {
+        logout();
+      }
+
+      if (error.response?.data.code === 807) {
         logout();
       }
     }
@@ -95,8 +111,6 @@ const App = () => {
     const accessToken = await getAccessTokenByRefreshToken(refreshToken);
 
     setAccessToken(accessToken);
-
-    await refetchUser();
   };
 
   const removeAccessToken = () => {
@@ -108,14 +122,8 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (!getLocalStorage("accessToken")) {
-      logout();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isActiveAccessToken) refetchUser();
-  }, [isActiveAccessToken]);
+    refetchUser();
+  }, [accessToken]);
 
   useEffect(() => {
     if (error) {
@@ -128,13 +136,14 @@ const App = () => {
   }, [error]);
 
   useEffect(() => {
-    if (!isDeleteError) return;
+    if (!deleteError) return;
 
+    setUser(undefined);
     setAccessToken(undefined);
     removeLocalStorage("active");
-    removeLocalStorage("refreshToken");
     removeLocalStorage("accessToken");
-  }, [isDeleteError]);
+    removeLocalStorage("refreshToken");
+  }, [deleteError]);
 
   return (
     <ThemeProvider

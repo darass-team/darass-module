@@ -42,6 +42,13 @@ const getUser = async () => {
 
       throw newError;
     }
+
+    if (error.response?.data.code === 809 || error.response?.data.code === 807) {
+      const newError = new Error("리프레시 토큰 에러");
+      newError.name = "refreshToken error";
+
+      throw newError;
+    }
   }
 };
 

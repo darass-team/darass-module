@@ -34,7 +34,7 @@ const CommentArea = ({ isVisible }: Props) => {
   const [sortOption, setSortOption] = useState<keyof typeof ORDER_BUTTON>("oldest");
   const [notice, setNotice] = useState("");
 
-  const { user, logout, refetchAccessToken } = useUserContext();
+  const { user, logout, refetchAccessToken, refetchUser } = useUserContext();
 
   const {
     uiInfo: { isAllowSocialLogin }
@@ -75,14 +75,8 @@ const CommentArea = ({ isVisible }: Props) => {
       setNotice(getProjectOwnerError.message);
       return;
     }
-    if (commentsError) {
-      setNotice(commentsError.message);
-      return;
-    } else {
-      setNotice("");
-    }
 
-    if (!(getProjectOwnerError || commentsError)) {
+    if (!getProjectOwnerError) {
       if (totalCommentsCount === 0) {
         setNotice("작성된 댓글이 없습니다.");
         return;
@@ -97,9 +91,8 @@ const CommentArea = ({ isVisible }: Props) => {
 
     const timerId = setInterval(() => {
       if (!popUp || !popUp.closed) return;
-
       clearInterval(timerId);
-      refetchAccessToken();
+      refetchUser();
     }, 1000);
   };
 
