@@ -48,7 +48,7 @@ const App = () => {
 
   const { port, receivedMessageFromReplyModal } = useReplyModuleApp();
 
-  const { deleteMutation } = useDeleteAccessToken({
+  const { deleteMutation, isDeleteError } = useDeleteAccessToken({
     onSuccess: () => {
       setUser(undefined);
       setAccessToken(undefined);
@@ -73,17 +73,18 @@ const App = () => {
       }
 
       if (error.response?.data.code === 801) {
-        // 액세스 토큰이 만료되었습니다.
         refetchAccessToken();
       }
 
-      if (error.response?.data.code === 401) {
-        // 리프레시 토큰이 존재하지 않습니다.
+      if (error.response?.data.code === 808) {
+        refetchAccessToken();
+      }
+
+      if (error.response?.data.code === 806) {
         logout();
       }
 
-      if (error.response?.data.code === 808) {
-        //"리프레시 토큰이 유효하지 않습니다."
+      if (error.response?.data.code === 810) {
         logout();
       }
     }
@@ -125,6 +126,15 @@ const App = () => {
       }
     }
   }, [error]);
+
+  useEffect(() => {
+    if (!isDeleteError) return;
+
+    setAccessToken(undefined);
+    removeLocalStorage("active");
+    removeLocalStorage("refreshToken");
+    removeLocalStorage("accessToken");
+  }, [isDeleteError]);
 
   return (
     <ThemeProvider

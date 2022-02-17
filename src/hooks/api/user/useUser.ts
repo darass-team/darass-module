@@ -15,8 +15,14 @@ const getUser = async () => {
     if (!axios.isAxiosError(error)) {
       throw new AlertError("알 수 없는 에러입니다.");
     }
-
     if (error.response?.data.code === 801) {
+      const newError = new Error("액세스 토큰이 만료되었습니다.");
+      newError.name = "expiredAccessToken";
+
+      throw newError;
+    }
+
+    if (error.response?.data.code === 808) {
       const newError = new Error("액세스 토큰이 만료되었습니다.");
       newError.name = "expiredAccessToken";
 
@@ -30,7 +36,12 @@ const getUser = async () => {
       throw newError;
     }
 
-    throw new AlertError("유저정보 조회에 실패하였습니다.\n잠시 후 다시 시도해주세요.");
+    if (error.response?.data.code === 810) {
+      const newError = new Error("이미 유효한 액세스토큰이 있습니다.");
+      newError.name = "alreadyHasAccessToken";
+
+      throw newError;
+    }
   }
 };
 
