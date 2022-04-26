@@ -88,14 +88,6 @@ const App = () => {
         logout();
       }
 
-      if (error.response?.data.code === 810) {
-        setUser(undefined);
-        setAccessToken(undefined);
-        removeLocalStorage("active");
-        removeLocalStorage("refreshToken");
-        removeLocalStorage("accessToken");
-      }
-
       if (error.response?.data.code === 809) {
         logout();
       }
