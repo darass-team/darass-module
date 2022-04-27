@@ -64,6 +64,7 @@ const App = () => {
 
       const { accessToken } = response.data;
 
+      setAccessToken(accessToken);
       setLocalStorage("accessToken", accessToken);
 
       return accessToken;
